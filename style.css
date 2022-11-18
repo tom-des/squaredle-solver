@@ -1,0 +1,75 @@
+* {
+    box-sizing: border-box;
+}
+
+h1{
+    text-align: center;
+    font-size: 50px;
+}
+
+body {
+    font-family: 'Courier New', Courier, monospace;
+    background: black;
+    color: white;
+}
+
+#game-elements{
+    width: 100%;
+}
+
+#gameboard {
+    display: block;
+    margin: auto;
+    border: white 1px solid;
+    width: fit-content;
+    margin-bottom: 20px;
+}
+
+.row {
+    width: 100%;
+    text-align: center;
+}
+
+.tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 75px;
+    height: 75px;
+    font-size: 30px;
+    border: white 2px solid;
+    background: black;
+    color: white;
+}
+
+[data-avail="false"]{
+    background-color:red;
+}
+
+#word-list{
+    height: 275px;
+    width: 300px;
+    overflow: scroll;
+    display: block;
+    margin: auto;
+    border: 3px white solid;
+    padding-left: 15px;
+}
+
+#solve-button{
+    display: block;
+    margin: auto;
+    margin-top: 40px;
+    height: 50px;
+    font-size: 20px;
+    background: black;
+    color: white;
+    border: 2px white solid;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+#solve-button:hover{
+    background: white;
+    color: black;
+    cursor: pointer;
+}
