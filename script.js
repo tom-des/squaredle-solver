@@ -6,11 +6,26 @@ solveButton.addEventListener('click', ()=>{
     }
 })
 
+function getUniqueLetters() {
+    let letters = []
+    for (let i = 0; i < rows.length; i++) {
+        for (let j = 0; j < rows[i].length; j++) {
+            letters.push(rows[i][j])
+        }
+    }
+    return [...new Set(letters)]
+}
+
+
+
+
+
 let rows = [
 
-    ['S', 'Q', 'U'],
-    ['A', 'R', 'D'],
-    ['L', 'E', 'S'],
+    ['I', 'S', 'O', 'L'],
+    ['E', 'D', 'L', 'V'],
+    ['R', 'S', 'E', 'E'],
+    ['A', 'U', 'Q', 'S']
 
 ]
 
@@ -73,10 +88,34 @@ let currentWord = []
 createGameboard(rows)
 
 async function createDictionary() {
+    let uniqueLetters = getUniqueLetters()
     let response = await fetch("dictionary.txt")
     let dictionaryString = await response.text()
     dictionary = dictionaryString.split('\n')
     dictionary = dictionary.filter(word => word.length >= 4)
+    console.log(dictionary.length + " words in original dictionary")
+    dictionary = dictionary.filter(word => {
+        wordLetters = [...word.split('')]
+        for (letter of wordLetters) {
+            if (!uniqueLetters.includes(letter)) {
+                return false
+            }
+        }
+        return true
+    })
+    console.log(dictionary.length + " words in filtered dictionary")
+
+}
+
+// Create array of unique letters in rows arrrays
+function createLettersArray() {
+    for (let i = 0; i < rows.length; i++) {
+        for (let j = 0; j < rows[0].length; j++) {
+            if (!currentLettersArray.includes(rows[i][j])) {
+                currentLettersArray.push(rows[i][j])
+            }
+        }
+    }
 }
 
 async function solver() {
@@ -212,6 +251,28 @@ async function solver() {
 
     // Remove duplicates from solutions (shouldn't be any, can probably cut this), sort alphabetically, and log out.
 
+    function createSolutionsObjectsArray() {
+        let array = []
+        for (let i = 0; i < solutionArray.length; i++) {
+            array.push({
+                word: solutionArray[i],
+                letters: solutionLettersArray[i]
+            })
+        }
+        return array
+    }
+
+    let solutionObjects = createSolutionsObjectsArray()
+    console.log(solutionObjects)
+
+    solutionObjects = solutionObjects.filter((filterSolution, index, originalArray) =>
+        index === originalArray.findIndex((originalSolution) => (
+            originalSolution.word === filterSolution.word
+        ))
+    )
+
+    solutionObjects.sort((a, b) => b.word.length - a.word.length)
+
     console.log(solutionArray)
     gameboardElem = document.querySelector("#game-elements")
     wordListContainerElem = document.createElement("div")
@@ -221,10 +282,10 @@ async function solver() {
     wordListContainerElem = document.querySelector("#word-list")
     wordListElem = document.createElement("ol")
     wordListContainerElem.appendChild(wordListElem)
-    solutionArray.forEach((item, index) => {
+    solutionObjects.forEach((item) => {
         listItem = document.createElement("li")
-        listItem.dataset.tiles = solutionLettersArray[index]
-        listItem.textContent = item
+        listItem.dataset.tiles = item.letters
+        listItem.textContent = item.word
         listItem.addEventListener("mouseover", (e) => colorWord(e))
         listItem.addEventListener("mouseout", (e) => colorWord(e, "black"))
         wordListElem.appendChild(listItem)
