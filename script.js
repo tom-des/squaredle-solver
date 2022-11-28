@@ -1,27 +1,33 @@
+// Define game variables subject to change
+const minWordLength = 4
+const requiredNumberOfTiles = 16
+
 // Define solve button elem and add event listeners
-solveButton = document.querySelector('#solve-button')
-solveButton.addEventListener('click', solver)
+let solveButtonElem = document.querySelector('#solve-button')
+solveButtonElem.addEventListener('click', solver)
 
 // Define input elems and add event listeners
-let enterGameElem = document.querySelector('#enter-board')
+let letterInputElem = document.querySelector('#enter-board')
 let boardSizeElem = document.querySelector('#board-size')
-enterGameElem.addEventListener('input', () => {
-    let inputValue = enterGameElem.value
-    if(inputValue.match(/[^a-zA-Z]/g)) {
-        boardSizeElem.textContent = "Only letters are allowed"
-        boardSizeElem.style.color = "red"
-        solveButton.style.display = "none"
+letterInputElem.addEventListener('input', () => {
+    let inputValue = letterInputElem.value
+    if (inputValue.match(/[^a-zA-Z]/g)) {
+        boardSizeElem.textContent = 'Only letters are allowed'
+        boardSizeElem.style.color = 'red'
+        solveButtonElem.style.display = 'none'
         return
     }
-    solveButton.style.display = "block"
-    boardSizeElem.style.color = "white"
+    solveButtonElem.style.display = 'block'
+    boardSizeElem.style.color = 'white'
     let length = inputValue.length
-    if (length == 16) {
-        boardSizeElem.textContent = "You've entered a 4x4 board!"
-    }else{
-       boardSizeElem.textContent = "Enter " + (16 - length) + " more letters"
+    if (length == requiredNumberOfTiles) {
+        boardSizeElem.textContent = `You've entered a complete board!`
+    } else {
+        boardSizeElem.textContent = 'Enter ' + (requiredNumberOfTiles - length) + ' more letters'
     }
 })
+
+let gameboardElem = document.querySelector('#gameboard')
 
 // Rows used to initialize gameboard and in absence of user input
 let defaultRows = [
@@ -31,7 +37,9 @@ let defaultRows = [
     ['A', 'U', 'Q', 'S']
 ]
 
-let gameboardElem = document.querySelector('#gameboard')
+//////////////////////////
+// Define global functions
+//////////////////////////
 
 // Function to generate initial availArray
 function generateAvailArray(rowCount, colCount) {
@@ -45,31 +53,27 @@ function generateAvailArray(rowCount, colCount) {
     return availArray
 }
 
-//////////////////////////
-// Define global functions
-//////////////////////////
-
 // Function to create gameboard from rows array
 function createGameboard(rows) {
     // Create rows on gameboard
     for (let i = 0; i < rows.length; i++) {
         rowElem = document.createElement('div')
-        rowElem.className = "row"
+        rowElem.className = 'row'
         rowElem.dataset.row = i // Not sure this is used
         gameboardElem.appendChild(rowElem)
         //Create tiles in rows
         for (let j = 0; j < rows[0].length; j++) {
             tileElem = document.createElement('div')
-            tileElem.className = "tile"
-            tileElem.id = "index" + i + j // Coordinate of tile for hover styling
+            tileElem.className = 'tile'
+            tileElem.id = 'index' + i + j // Coordinate of tile for hover styling
             if (tileElem.textContent = rows[i][j] == '') { // Not currently in use
-                tileElem.textContent = "X"
-                tileElem.style.color = "black"
+                tileElem.textContent = 'X'
+                tileElem.style.color = 'black'
             } else {
                 tileElem.textContent = rows[i][j]
             }
             tileElem.dataset.col = j // Not sure this is used
-            tileElem.dataset.avail = "true"
+            tileElem.dataset.avail = 'true'
             rowElem.appendChild(tileElem)
         }
     }
@@ -78,11 +82,11 @@ function createGameboard(rows) {
 // Generate dictionary array and filter it to only include words that contain letters in the rows array
 async function createDictionary() {
     let uniqueLetters = getUniqueLetters()
-    let response = await fetch("dictionary.txt")
+    let response = await fetch('dictionary.txt')
     let dictionaryString = await response.text()
     dictionary = dictionaryString.split('\n')
-    dictionary = dictionary.filter(word => word.length >= 4)
-    //console.log(dictionary.length + " words in original dictionary")
+    dictionary = dictionary.filter(word => word.length >= minWordLength)
+    //console.log(dictionary.length + ' words in original dictionary')
     dictionary = dictionary.filter(word => {
         let wordLetters = [...word.split('')]
         for (let letter of wordLetters) {
@@ -92,7 +96,7 @@ async function createDictionary() {
         }
         return true
     })
-    //console.log(dictionary.length + " words in filtered dictionary")
+    //console.log(dictionary.length + ' words in filtered dictionary')
 }
 
 // Combines rows array into a single array and remove duplicates
@@ -114,12 +118,12 @@ createGameboard(defaultRows)
 ///////////////////////////////
 
 async function solver() {
-    solveButton.textContent = "Solving..."
+    solveButtonElem.textContent = 'Solving...'
 
     function createRows() {
-        let inputLetters = enterGameElem.value.toUpperCase()
+        let inputLetters = letterInputElem.value.toUpperCase()
         if (!inputLetters) return defaultRows
-        if (inputLetters.length !== 16) return
+        if (inputLetters.length !== requiredNumberOfTiles) return
         let inputRows = inputLetters.split('')
         let rowLength = Math.sqrt(inputLetters.length)
         let rows = []
@@ -135,9 +139,9 @@ async function solver() {
         return rows
     }
     rows = createRows()
-    if(!rows) {
-        solveButton.textContent = "Get Solutions"
-        alert("Please enter 16 letters")
+    if (!rows) {
+        solveButtonElem.textContent = 'Get Solutions'
+        alert('Please enter ' + requiredNumberOfTiles + ' letters')
         return
     }
     document.querySelector('#gameboard').innerHTML = ''
@@ -161,8 +165,8 @@ async function solver() {
     function getNextTile(row, col) {
 
         // Modifier indicate where to get the next tile from
-        let rowMods = [-1, -1, -1, 0, 1, 1, 1, 0] // Add this number to the row index
-        let colMods = [-1, 0, 1, 1, 1, 0, -1, -1] // Add this number to the column index
+        const rowMods = [-1, -1, -1, 0, 1, 1, 1, 0] // Add this number to the row index
+        const colMods = [-1, 0, 1, 1, 1, 0, -1, -1] // Add this number to the column index
 
         const SURROUNDING_TILE_COUNT = 8
         // [0][1][2][ ]
@@ -173,9 +177,9 @@ async function solver() {
         // Define internal functions for getNextTile
         // Function to change tile availabilty when it is added or removed from currentWord
         function toggleAvail(row, col, status) {
-            if (status === "true") {
+            if (status === 'true') {
                 availArray[row][col] = true
-            } else if (status === "false") {
+            } else if (status === 'false') {
                 availArray[row][col] = false
             }
         }
@@ -184,7 +188,7 @@ async function solver() {
         function removeTile(row, col) {
             currentWord.pop()
             currentLettersArray.pop()
-            toggleAvail(row, col, "true")
+            toggleAvail(row, col, 'true')
         }
 
         /////////////////////////////
@@ -195,10 +199,10 @@ async function solver() {
         if (rows[row][col] === '') return
 
         // Make the current tile unavailable
-        toggleAvail(row, col, "false")
+        toggleAvail(row, col, 'false')
 
         // If this is the first iteration, initialize current letter.
-        if (currentWord.length < 1) {
+        if (currentWord.length === 0) {
             currentWord.push(rows[row][col])
             currentLettersArray.push(`${row}${col}`)
         }
@@ -211,24 +215,20 @@ async function solver() {
                 continue
             }
 
-            // Define row and column modifiers.
-            let rowMod = rowMods[i]
-            let colMod = colMods[i]
-
             // Define row and column values for the next tile.
-            let newRow = row + rowMod
-            let newCol = col + colMod
+            let newRow = row + rowMods[i]
+            let newCol = col + colMods[i]
 
             // Catch and throw away invalid tiles (off the gameboard, not available, empty value).
             let isValidRowCol = newRow >= 0 && newCol >= 0 && newCol < colCount && newRow < rowCount
-            let isValidTile = isValidRowCol && availArray[newRow][newCol] === true && rows[newRow][newCol] !== ""
+            let isValidTile = isValidRowCol && availArray[newRow][newCol] === true && rows[newRow][newCol] !== ''
             if (!isValidTile) {
                 continue
             }
 
             // Define next letter based on row and column values.
             let nextLetter = rows[newRow][newCol]
-            toggleAvail(newRow, newCol, "false")
+            toggleAvail(newRow, newCol, 'false')
 
             // Add next letter to running word and perform dictionary filtering based on current letters. 
             currentWord.push(nextLetter)
@@ -246,7 +246,7 @@ async function solver() {
                 isNewValidWord = false
             }
             if (isValidWord) {
-                //console.log("Solution! " + joinedCurrentWord)
+                //console.log('Solution! ' + joinedCurrentWord)
                 solutionArray.push(joinedCurrentWord)
                 solutionLettersArray.push(currentLettersArray.join(','))
 
@@ -264,7 +264,7 @@ async function solver() {
         }
     }
 
-    // END OF getNextTile FUNCTION
+    // END OF getNextTile
 
     // Run through every available tile with getNextTile
     for (let l = 0; l < rowCount; l++) {
@@ -286,7 +286,6 @@ async function solver() {
     }
 
     let solutionObjects = createSolutionsObjectsArray()
-    //console.log(solutionObjects)
 
     // Remove duplicates from solution objects and sort alphabetically
     solutionObjects = solutionObjects.filter((filterSolution, index, originalArray) =>
@@ -304,15 +303,15 @@ async function solver() {
         }
         elem = e.target
         if (!color) {
-            colors = ["red", "blue", "green", "purple"]
+            colors = ['red', 'blue', 'green', 'purple']
             colorNum = generateRandomInteger(colors.length - 1)
             color = colors[colorNum]
         }
         elem.style.backgroundColor = color
         tileNums = elem.dataset.tiles
-        tileNums = tileNums.split(",")
+        tileNums = tileNums.split(',')
         tileNums.forEach(tile => {
-            tileElem = document.querySelector("#index" + tile)
+            tileElem = document.querySelector('#index' + tile)
             tileElem.style.backgroundColor = color
         })
     }
@@ -321,7 +320,7 @@ async function solver() {
     // Create HTML elements for solutions
     //////////////////////////////////////
 
-    let gameboardElem = document.querySelector("#game-elements")
+    let gameboardElem = document.querySelector('#game-elements')
 
     // Create word list container and append it to the gameboard
 
@@ -330,19 +329,19 @@ async function solver() {
         document.getElementById('word-list').remove()
     }
 
-    let wordListContainerElem = document.createElement("div")
-    wordListContainerElem.id = "word-list"
+    let wordListContainerElem = document.createElement('div')
+    wordListContainerElem.id = 'word-list'
     gameboardElem.appendChild(wordListContainerElem)
 
     // Create the word list and append it to the word list container
-    let wordListElem = document.createElement("ol")
+    let wordListElem = document.createElement('ol')
     wordListContainerElem.appendChild(wordListElem)
     solutionObjects.forEach((item) => {
-        let listItem = document.createElement("li")
+        let listItem = document.createElement('li')
         listItem.dataset.tiles = item.letters
         listItem.textContent = item.word
-        listItem.addEventListener("mouseover", (e) => colorWord(e))
-        listItem.addEventListener("mouseout", (e) => colorWord(e, "black"))
+        listItem.addEventListener('mouseover', (e) => colorWord(e))
+        listItem.addEventListener('mouseout', (e) => colorWord(e, 'black'))
         wordListElem.appendChild(listItem)
 
     })
@@ -351,11 +350,11 @@ async function solver() {
     // Final outputs and formatting
     endTime = Date.now()
     runTime = endTime - startTime
-    console.log("Runtime was " + (runTime / 1000) + " seconds.")
-    solveButton.textContent = "Get Solutions"
+    console.log('Runtime was ' + (runTime / 1000) + ' seconds.')
+    solveButtonElem.textContent = 'Get Solutions'
     wordListContainerElem.scrollIntoView({
         behavior: 'smooth'
     })
 }
 
-// END OF solver FUNCTION
+// END OF solver
