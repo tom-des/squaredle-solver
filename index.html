@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,10 +9,16 @@
     <script defer src="script.js"></script>
     <title>Squaredle Solver</title>
 </head>
+
 <body>
-    <h1>SQUAREDLE<br/>SOLVER</h1>
-    <div id="game-elements"><div id="gameboard"></div></div>
-    <button id="solve-button">Get Solutions</button>  
+    <h1>SQUAREDLE<br />SOLVER</h1>
+    <div id="game-elements">
+        <textarea placeholder="ENTER LETTERS..." rows="1" name="" maxlength="16" id="enter-board"></textarea>
+        <span id="board-size">Enter 16 letters</span>
+
+        <div id="gameboard"></div>
+        <button id="solve-button">Get Solutions</button>
     </div>
 </body>
+
 </html>

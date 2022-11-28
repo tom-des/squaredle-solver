@@ -1,14 +1,30 @@
-// Define solve button click events
+// Define solve button elem and add event listeners
 solveButton = document.querySelector('#solve-button')
 solveButton.addEventListener('click', solver)
-solveButton.addEventListener('click', () => {
-    if (solveButton.textContent == "Get Solutions") {
-        solveButton.textContent = "Solving..."
+
+// Define input elems and add event listeners
+let enterGameElem = document.querySelector('#enter-board')
+let boardSizeElem = document.querySelector('#board-size')
+enterGameElem.addEventListener('input', () => {
+    let inputValue = enterGameElem.value
+    if(inputValue.match(/[^a-zA-Z]/g)) {
+        boardSizeElem.textContent = "Only letters are allowed"
+        boardSizeElem.style.color = "red"
+        solveButton.style.display = "none"
+        return
+    }
+    solveButton.style.display = "block"
+    boardSizeElem.style.color = "white"
+    let length = inputValue.length
+    if (length == 16) {
+        boardSizeElem.textContent = "You've entered a 4x4 board!"
+    }else{
+       boardSizeElem.textContent = "Enter " + (16 - length) + " more letters"
     }
 })
 
-// Define global variables
-let rows = [
+// Rows used to initialize gameboard and in absence of user input
+let defaultRows = [
     ['I', 'S', 'O', 'L'],
     ['E', 'D', 'L', 'V'],
     ['R', 'S', 'E', 'E'],
@@ -46,7 +62,7 @@ function createGameboard(rows) {
             tileElem = document.createElement('div')
             tileElem.className = "tile"
             tileElem.id = "index" + i + j // Coordinate of tile for hover styling
-            if (tileElem.textContent = rows[i][j] == '') {
+            if (tileElem.textContent = rows[i][j] == '') { // Not currently in use
                 tileElem.textContent = "X"
                 tileElem.style.color = "black"
             } else {
@@ -91,17 +107,41 @@ function getUniqueLetters() {
 }
 
 // Create intial gameboard
-createGameboard(rows)
+createGameboard(defaultRows)
 
 ///////////////////////////////
 // Main solver wrapper function
 ///////////////////////////////
 
 async function solver() {
-    // If a word list elem already exists, remove it
-    if (document.getElementById('word-list')) {
-        document.getElementById('word-list').remove()
+    solveButton.textContent = "Solving..."
+
+    function createRows() {
+        let inputLetters = enterGameElem.value.toUpperCase()
+        if (!inputLetters) return defaultRows
+        if (inputLetters.length !== 16) return
+        let inputRows = inputLetters.split('')
+        let rowLength = Math.sqrt(inputLetters.length)
+        let rows = []
+        let row = []
+        for (let i = 0; i < inputRows.length; i++) {
+            row.push(inputLetters[i])
+            if (row.length == rowLength) {
+                rows.push(row)
+                row = []
+            }
+        }
+        //console.log(rows)
+        return rows
     }
+    rows = createRows()
+    if(!rows) {
+        solveButton.textContent = "Get Solutions"
+        alert("Please enter 16 letters")
+        return
+    }
+    document.querySelector('#gameboard').innerHTML = ''
+    createGameboard(rows)
 
     // Define function scope variables
     let solutionArray = []
@@ -152,9 +192,7 @@ async function solver() {
         /////////////////////////////
 
         // If the current tile is not available, move on to the next tile
-        if (rows[row][col] === '') {
-            return
-        }
+        if (rows[row][col] === '') return
 
         // Make the current tile unavailable
         toggleAvail(row, col, "false")
@@ -166,7 +204,6 @@ async function solver() {
         }
 
         // Find all possible words eminating from tile.
-
         for (let i = 0; i <= SURROUNDING_TILE_COUNT; i++) {
             // If the last round was the last round in the cycle, remove an extra letter and go to next round.
             if (i == SURROUNDING_TILE_COUNT) {
@@ -287,6 +324,12 @@ async function solver() {
     let gameboardElem = document.querySelector("#game-elements")
 
     // Create word list container and append it to the gameboard
+
+    // If a word list elem already exists, remove it
+    if (document.getElementById('word-list')) {
+        document.getElementById('word-list').remove()
+    }
+
     let wordListContainerElem = document.createElement("div")
     wordListContainerElem.id = "word-list"
     gameboardElem.appendChild(wordListContainerElem)
@@ -309,8 +352,10 @@ async function solver() {
     endTime = Date.now()
     runTime = endTime - startTime
     console.log("Runtime was " + (runTime / 1000) + " seconds.")
-    // solveButton.style.display = 'none'
     solveButton.textContent = "Get Solutions"
+    wordListContainerElem.scrollIntoView({
+        behavior: 'smooth'
+    })
 }
 
 // END OF solver FUNCTION
