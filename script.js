@@ -1,11 +1,85 @@
+// Define solve button click events
 solveButton = document.querySelector('#solve-button')
 solveButton.addEventListener('click', solver)
-solveButton.addEventListener('click', ()=>{
+solveButton.addEventListener('click', () => {
     if (solveButton.textContent == "Get Solutions") {
         solveButton.textContent = "Solving..."
     }
 })
 
+// Define global variables
+let rows = [
+    ['I', 'S', 'O', 'L'],
+    ['E', 'D', 'L', 'V'],
+    ['R', 'S', 'E', 'E'],
+    ['A', 'U', 'Q', 'S']
+]
+
+let gameboardElem = document.querySelector('#gameboard')
+
+// Function to generate initial availArray
+function generateAvailArray(rowCount, colCount) {
+    let availArray = []
+    for (let i = 0; i < rowCount; i++) {
+        availArray.push([])
+        for (let j = 0; j < colCount; j++) {
+            availArray[i].push(true)
+        }
+    }
+    return availArray
+}
+
+//////////////////////////
+// Define global functions
+//////////////////////////
+
+// Function to create gameboard from rows array
+function createGameboard(rows) {
+    // Create rows on gameboard
+    for (let i = 0; i < rows.length; i++) {
+        rowElem = document.createElement('div')
+        rowElem.className = "row"
+        rowElem.dataset.row = i // Not sure this is used
+        gameboardElem.appendChild(rowElem)
+        //Create tiles in rows
+        for (let j = 0; j < rows[0].length; j++) {
+            tileElem = document.createElement('div')
+            tileElem.className = "tile"
+            tileElem.id = "index" + i + j // Coordinate of tile for hover styling
+            if (tileElem.textContent = rows[i][j] == '') {
+                tileElem.textContent = "X"
+                tileElem.style.color = "black"
+            } else {
+                tileElem.textContent = rows[i][j]
+            }
+            tileElem.dataset.col = j // Not sure this is used
+            tileElem.dataset.avail = "true"
+            rowElem.appendChild(tileElem)
+        }
+    }
+}
+
+// Generate dictionary array and filter it to only include words that contain letters in the rows array
+async function createDictionary() {
+    let uniqueLetters = getUniqueLetters()
+    let response = await fetch("dictionary.txt")
+    let dictionaryString = await response.text()
+    dictionary = dictionaryString.split('\n')
+    dictionary = dictionary.filter(word => word.length >= 4)
+    //console.log(dictionary.length + " words in original dictionary")
+    dictionary = dictionary.filter(word => {
+        let wordLetters = [...word.split('')]
+        for (let letter of wordLetters) {
+            if (!uniqueLetters.includes(letter)) {
+                return false
+            }
+        }
+        return true
+    })
+    //console.log(dictionary.length + " words in filtered dictionary")
+}
+
+// Combines rows array into a single array and remove duplicates
 function getUniqueLetters() {
     let letters = []
     for (let i = 0; i < rows.length; i++) {
@@ -16,141 +90,76 @@ function getUniqueLetters() {
     return [...new Set(letters)]
 }
 
-
-
-
-
-let rows = [
-
-    ['I', 'S', 'O', 'L'],
-    ['E', 'D', 'L', 'V'],
-    ['R', 'S', 'E', 'E'],
-    ['A', 'U', 'Q', 'S']
-
-]
-
-function toggleAvail(row, col, status) {
-
-    if (status === "true") {
-        availArray[row][col] = true
-    } else if (status === "false") {
-        availArray[row][col] = false
-    }
-
-}
-
-function createGameboard(rows) {
-
-    gameboardElem = document.querySelector('#gameboard')
-
-    for (let i = 0; i < rows.length; i++) {
-
-        rowElem = document.createElement('div')
-        rowElem.className = "row"
-        rowElem.dataset.row = i
-        gameboardElem.appendChild(rowElem)
-
-        for (let j = 0; j < rows[0].length; j++) {
-            tileElem = document.createElement('div')
-            tileElem.className = "tile"
-            tileElem.id = "index" + i + j
-            if (tileElem.textContent = rows[i][j] == '') {
-                tileElem.textContent = "X"
-                tileElem.style.color = "black"
-            } else {
-                tileElem.textContent = rows[i][j]
-            }
-            tileElem.dataset.col = j
-
-            tileElem.dataset.avail = "true"
-            rowElem.appendChild(tileElem)
-
-        }
-    }
-}
-
-let rowCount = rows.length
-let colCount = rows[0].length
-let availArray = []
-
-for (let i = 0; i < rowCount; i++) {
-    availArray.push([])
-    for (let j = 0; j < colCount; j++) {
-        availArray[i].push(true)
-    }
-}
-
-let solutionArray = []
-let solutionLettersArray = []
-let currentLettersArray = []
-let currentWord = []
-
+// Create intial gameboard
 createGameboard(rows)
 
-async function createDictionary() {
-    let uniqueLetters = getUniqueLetters()
-    let response = await fetch("dictionary.txt")
-    let dictionaryString = await response.text()
-    dictionary = dictionaryString.split('\n')
-    dictionary = dictionary.filter(word => word.length >= 4)
-    console.log(dictionary.length + " words in original dictionary")
-    dictionary = dictionary.filter(word => {
-        wordLetters = [...word.split('')]
-        for (letter of wordLetters) {
-            if (!uniqueLetters.includes(letter)) {
-                return false
-            }
-        }
-        return true
-    })
-    console.log(dictionary.length + " words in filtered dictionary")
-
-}
-
-// Create array of unique letters in rows arrrays
-function createLettersArray() {
-    for (let i = 0; i < rows.length; i++) {
-        for (let j = 0; j < rows[0].length; j++) {
-            if (!currentLettersArray.includes(rows[i][j])) {
-                currentLettersArray.push(rows[i][j])
-            }
-        }
-    }
-}
+///////////////////////////////
+// Main solver wrapper function
+///////////////////////////////
 
 async function solver() {
-
-    await createDictionary()
-    startTime = Date.now()
-
-    function removeTile(row, col) {
-
-        currentWord.pop()
-        currentLettersArray.pop()
-        toggleAvail(row, col, "true")
-
+    // If a word list elem already exists, remove it
+    if (document.getElementById('word-list')) {
+        document.getElementById('word-list').remove()
     }
 
-    // Each time this is called, a new letter cycle starts.
+    // Define function scope variables
+    let solutionArray = []
+    let solutionLettersArray = []
+    let currentLettersArray = []
+    let currentWord = []
+    let rowCount = rows.length
+    let colCount = rows[0].length
+    let availArray = generateAvailArray(rowCount, colCount)
+    await createDictionary()
+    startTime = Date.now() // For calculating time to solve
+
+    // Function to deal with each tile on the gameboard
+    // The heavy lifting is done here
+    // Each time this is called, a new letter cycle starts. It is called recursively until all letters have been used.
 
     function getNextTile(row, col) {
 
+        // Modifier indicate where to get the next tile from
+        let rowMods = [-1, -1, -1, 0, 1, 1, 1, 0] // Add this number to the row index
+        let colMods = [-1, 0, 1, 1, 1, 0, -1, -1] // Add this number to the column index
+
+        const SURROUNDING_TILE_COUNT = 8
+        // [0][1][2][ ]
+        // [7][X][3][ ]
+        // [6][5][4][ ]
+        // [ ][ ][ ][ ]
+
+        // Define internal functions for getNextTile
+        // Function to change tile availabilty when it is added or removed from currentWord
+        function toggleAvail(row, col, status) {
+            if (status === "true") {
+                availArray[row][col] = true
+            } else if (status === "false") {
+                availArray[row][col] = false
+            }
+        }
+
+        // Function to remove take care of tile removal
+        function removeTile(row, col) {
+            currentWord.pop()
+            currentLettersArray.pop()
+            toggleAvail(row, col, "true")
+        }
+
+        /////////////////////////////
+        // START OF getNextTile work
+        /////////////////////////////
+
+        // If the current tile is not available, move on to the next tile
         if (rows[row][col] === '') {
             return
         }
 
+        // Make the current tile unavailable
         toggleAvail(row, col, "false")
 
-        let nextLetter
-        let colMod
-        let rowMod
-        let rowMods = [-1, -1, -1, 0, 1, 1, 1, 0]
-        let colMods = [-1, 0, 1, 1, 1, 0, -1, -1]
-        let newCol
-        let newRow
-
         // If this is the first iteration, initialize current letter.
-
         if (currentWord.length < 1) {
             currentWord.push(rows[row][col])
             currentLettersArray.push(`${row}${col}`)
@@ -158,99 +167,76 @@ async function solver() {
 
         // Find all possible words eminating from tile.
 
-        for (let i = 0; i < 9; i++) {
-
+        for (let i = 0; i <= SURROUNDING_TILE_COUNT; i++) {
             // If the last round was the last round in the cycle, remove an extra letter and go to next round.
-
-            if (i == 8) {
+            if (i == SURROUNDING_TILE_COUNT) {
                 removeTile(row, col)
                 continue
             }
 
             // Define row and column modifiers.
-
-            rowMod = rowMods[i]
-            colMod = colMods[i]
+            let rowMod = rowMods[i]
+            let colMod = colMods[i]
 
             // Define row and column values for the next tile.
-
-            newRow = row + rowMod
-            newCol = col + colMod
+            let newRow = row + rowMod
+            let newCol = col + colMod
 
             // Catch and throw away invalid tiles (off the gameboard, not available, empty value).
-
             let isValidRowCol = newRow >= 0 && newCol >= 0 && newCol < colCount && newRow < rowCount
             let isValidTile = isValidRowCol && availArray[newRow][newCol] === true && rows[newRow][newCol] !== ""
-
             if (!isValidTile) {
                 continue
             }
 
             // Define next letter based on row and column values.
-
-            nextLetter = rows[newRow][newCol]
-
+            let nextLetter = rows[newRow][newCol]
             toggleAvail(newRow, newCol, "false")
 
             // Add next letter to running word and perform dictionary filtering based on current letters. 
-
-            currentWord.push(nextLetter) 
+            currentWord.push(nextLetter)
             currentLettersArray.push(`${newRow}${newCol}`)
             newDict = dictionary.filter(word => currentWord.join('') === word.substring(0, currentWord.length))
-
-            console.log(newDict) 
-            console.log(currentWord) 
-
+            //console.log(newDict)
+            //console.log(currentWord)
             joinedCurrentWord = currentWord.join('')
 
-
             // Find out if the last check was a new solution and log it out.
-
             let isValidWord = newDict[0] === joinedCurrentWord
-
             if (isValidWord) {
                 isNewValidWord = solutionArray.indexOf(joinedCurrentWord) === -1
             } else {
                 isNewValidWord = false
             }
-
             if (isValidWord) {
-
-                console.log("Solution! " + joinedCurrentWord)
+                //console.log("Solution! " + joinedCurrentWord)
                 solutionArray.push(joinedCurrentWord)
                 solutionLettersArray.push(currentLettersArray.join(','))
 
             }
 
             // If there are no words in the dictionary, remove last tile and continue with the cycle.
-
             if (newDict.length == 0 || newDict.length === 1 && isValidWord) {
                 removeTile(newRow, newCol)
             }
 
             // Else: (if there are words in the dictionary still) get the next tile.
-
             else {
                 getNextTile(newRow, newCol)
-
-
             }
         }
     }
 
-    // Run through every available tile.
+    // END OF getNextTile FUNCTION
 
+    // Run through every available tile with getNextTile
     for (let l = 0; l < rowCount; l++) {
-
         for (let m = 0; m < colCount; m++) {
-
             getNextTile(l, m)
-
         }
     }
 
-    // Remove duplicates from solutions (shouldn't be any, can probably cut this), sort alphabetically, and log out.
-
+    // Create solution objects from arrays
     function createSolutionsObjectsArray() {
         let array = []
         for (let i = 0; i < solutionArray.length; i++) {
@@ -263,27 +249,53 @@ async function solver() {
     }
 
     let solutionObjects = createSolutionsObjectsArray()
-    console.log(solutionObjects)
+    //console.log(solutionObjects)
 
+    // Remove duplicates from solution objects and sort alphabetically
     solutionObjects = solutionObjects.filter((filterSolution, index, originalArray) =>
         index === originalArray.findIndex((originalSolution) => (
             originalSolution.word === filterSolution.word
         ))
     )
-
     solutionObjects.sort((a, b) => b.word.length - a.word.length)
+    //console.log(solutionArray)
 
-    console.log(solutionArray)
-    gameboardElem = document.querySelector("#game-elements")
-    wordListContainerElem = document.createElement("div")
+    // Function to randomly assign colors to solutions for onhover highlighting
+    function colorWord(e, color) {
+        function generateRandomInteger(max) {
+            return Math.floor(Math.random() * max) + 1;
+        }
+        elem = e.target
+        if (!color) {
+            colors = ["red", "blue", "green", "purple"]
+            colorNum = generateRandomInteger(colors.length - 1)
+            color = colors[colorNum]
+        }
+        elem.style.backgroundColor = color
+        tileNums = elem.dataset.tiles
+        tileNums = tileNums.split(",")
+        tileNums.forEach(tile => {
+            tileElem = document.querySelector("#index" + tile)
+            tileElem.style.backgroundColor = color
+        })
+    }
+
+    //////////////////////////////////////
+    // Create HTML elements for solutions
+    //////////////////////////////////////
+
+    let gameboardElem = document.querySelector("#game-elements")
+
+    // Create word list container and append it to the gameboard
+    let wordListContainerElem = document.createElement("div")
     wordListContainerElem.id = "word-list"
     gameboardElem.appendChild(wordListContainerElem)
 
-    wordListContainerElem = document.querySelector("#word-list")
-    wordListElem = document.createElement("ol")
+    // Create the word list and append it to the word list container
+    let wordListElem = document.createElement("ol")
     wordListContainerElem.appendChild(wordListElem)
     solutionObjects.forEach((item) => {
-        listItem = document.createElement("li")
+        let listItem = document.createElement("li")
         listItem.dataset.tiles = item.letters
         listItem.textContent = item.word
         listItem.addEventListener("mouseover", (e) => colorWord(e))
@@ -291,34 +303,14 @@ async function solver() {
         wordListElem.appendChild(listItem)
 
     })
-
     wordListContainerElem.appendChild(wordListElem)
 
+    // Final outputs and formatting
     endTime = Date.now()
     runTime = endTime - startTime
     console.log("Runtime was " + (runTime / 1000) + " seconds.")
-    solveButton.style.display = 'none'
+    // solveButton.style.display = 'none'
+    solveButton.textContent = "Get Solutions"
 }
 
-function generateRandomInteger(max) {
-    return Math.floor(Math.random() * max) + 1;
-}
-
-function colorWord(e, color) {
-    elem = e.target
-    if (!color) {
-        colors = ["red", "blue", "green", "purple"]
-        colorNum = generateRandomInteger(colors.length - 1)
-        color = colors[colorNum]
-
-    }
-
-    elem.style.backgroundColor = color
-    tileNums = elem.dataset.tiles
-    tileNums = tileNums.split(",")
-    tileNums.forEach(tile => {
-        tileElem = document.querySelector("#index" + tile)
-        tileElem.style.backgroundColor = color
-    })
-
-}
+// END OF solver FUNCTION
