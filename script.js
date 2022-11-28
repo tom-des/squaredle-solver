@@ -32,9 +32,9 @@ let gameboardElem = document.querySelector('#gameboard')
 // Rows used to initialize gameboard and in absence of user input
 let defaultRows = [
     ['I', 'S', 'O', 'L'],
-    ['E', 'D', 'L', 'V'],
-    ['R', 'S', 'E', 'E'],
-    ['A', 'U', 'Q', 'S']
+    ['V', 'E', 'S', 'Q'],
+    ['U', 'A', 'R', 'E'],
+    ['D', 'L', 'E', 'S']
 ]
 
 //////////////////////////
