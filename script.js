@@ -57,16 +57,19 @@ function generateAvailArray(rowCount, colCount) {
 function createGameboard(rows) {
     // Create rows on gameboard
     for (let i = 0; i < rows.length; i++) {
-        rowElem = document.createElement('div')
+        let rowElem = document.createElement('div')
         rowElem.className = 'row'
         rowElem.dataset.row = i // Not sure this is used
         gameboardElem.appendChild(rowElem)
         //Create tiles in rows
         for (let j = 0; j < rows[0].length; j++) {
-            tileElem = document.createElement('div')
+            let tileContainerElem = document.createElement('div')
+            tileContainerElem.className = 'tile-container' // Container needed for layers
+            let tileElem = document.createElement('div')
+            tileContainerElem.appendChild(tileElem)
             tileElem.className = 'tile'
             tileElem.id = 'index' + i + j // Coordinate of tile for hover styling
-            if (tileElem.textContent = rows[i][j] == '') { // Not currently in use
+            if (rows[i][j] == '') { // Not currently in use
                 tileElem.textContent = 'X'
                 tileElem.style.color = 'black'
             } else {
@@ -74,7 +77,10 @@ function createGameboard(rows) {
             }
             tileElem.dataset.col = j // Not sure this is used
             tileElem.dataset.avail = 'true'
-            rowElem.appendChild(tileElem)
+            let orderElem = document.createElement('div')
+            orderElem.className = 'order'
+            tileContainerElem.appendChild(orderElem)
+            rowElem.appendChild(tileContainerElem)
         }
     }
 }
@@ -303,16 +309,23 @@ async function solver() {
         }
         elem = e.target
         if (!color) {
-            colors = ['red', 'blue', 'green', 'purple']
-            colorNum = generateRandomInteger(colors.length - 1)
+            let colors = ['red', 'blue', 'green', 'purple']
+            let colorNum = generateRandomInteger(colors.length - 1)
             color = colors[colorNum]
         }
         elem.style.backgroundColor = color
-        tileNums = elem.dataset.tiles
+        let tileNums = elem.dataset.tiles
         tileNums = tileNums.split(',')
-        tileNums.forEach(tile => {
-            tileElem = document.querySelector('#index' + tile)
+        tileNums.forEach((tile, index) => {
+            let tileElem = document.querySelector('#index' + tile)
             tileElem.style.backgroundColor = color
+            tileElem.dataset.order = index + 1
+            if (color === 'black') {
+                tileElem.dataset.order = ''
+            }
+            let orderElem = document.querySelector('#index' + tile + '+.order')
+            orderElem.innerHTML = tileElem.dataset.order
+
         })
     }
 
@@ -348,8 +361,8 @@ async function solver() {
     wordListContainerElem.appendChild(wordListElem)
 
     // Final outputs and formatting
-    endTime = Date.now()
-    runTime = endTime - startTime
+    let endTime = Date.now()
+    let runTime = endTime - startTime
     console.log('Runtime was ' + (runTime / 1000) + ' seconds.')
     solveButtonElem.textContent = 'Get Solutions'
     wordListContainerElem.scrollIntoView({
