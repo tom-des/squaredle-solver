@@ -69,6 +69,7 @@ function createGameboard(rows) {
             tileContainerElem.appendChild(tileElem)
             tileElem.className = 'tile'
             tileElem.id = 'index' + i + j // Coordinate of tile for hover styling
+         tileElem.dataset.index = `${i}${j}`
             if (rows[i][j] == '') { // Not currently in use
                 tileElem.textContent = 'X'
                 tileElem.style.color = 'black'
@@ -141,7 +142,6 @@ async function solver() {
                 row = []
             }
         }
-        //console.log(rows)
         return rows
     }
     rows = createRows()
@@ -278,6 +278,7 @@ async function solver() {
             getNextTile(l, m)
         }
     }
+    
 
     // Create solution objects from arrays
     function createSolutionsObjectsArray() {
@@ -300,7 +301,37 @@ async function solver() {
         ))
     )
     solutionObjects.sort((a, b) => b.word.length - a.word.length)
-    //console.log(solutionArray)
+    let letters = solutionObjects.map(solution => solution.letters.split(','))
+
+    // Generate first letter frequency array
+    // Generate list of first letter in each array
+    let firstLetters = letters.map(letter => letter[0])
+    let firstLetterCount = {}
+    firstLetters.forEach(firstLetter => {
+        firstLetterCount[firstLetter] = (firstLetterCount[firstLetter] || 0) + 1
+    })
+
+    // Generate overall letter frequency array (not currently in use)
+    // Combine all letters into one array
+    letters = letters.reduce((a, b) => a.concat(b), [])
+    // Count how many times each value appears in letters array
+    let letterCount = {}
+    letters.forEach(letter => {
+        letterCount[letter] = (letterCount[letter] || 0) + 1
+    })
+
+    // Set value for first letter frequencies to tiles
+    let tiles = document.querySelectorAll('.tile')
+    tiles.forEach(tile => {
+        let tileIndex = tile.dataset.index
+        let tileCount = firstLetterCount[tileIndex]
+        if (!tileCount) {
+            tileCount = 0
+        }
+        let orderElem = document.querySelector('[data-index="' + tileIndex + '"]+.order')
+        orderElem.innerHTML = tileCount
+        tile.dataset.first = tileCount
+    })
 
     // Function to randomly assign colors to solutions for onhover highlighting
     function colorWord(e, color) {
@@ -318,15 +349,33 @@ async function solver() {
         tileNums = tileNums.split(',')
         tileNums.forEach((tile, index) => {
             let tileElem = document.querySelector('#index' + tile)
+            tileElem.dataset.hover = 'active'
             tileElem.style.backgroundColor = color
             tileElem.dataset.order = index + 1
-            if (color === 'black') {
-                tileElem.dataset.order = ''
-            }
             let orderElem = document.querySelector('#index' + tile + '+.order')
+            // Reset tiles to original state when highlighting is removed
+            if (color === 'black') {
+                tileElem.dataset.hover = ''
+                tileElem.dataset.order = ''
+                count = orderElem.dataset.first
+                tileElem.dataset.order = tileElem.dataset.first
+            }
             orderElem.innerHTML = tileElem.dataset.order
-
         })
+        // Hide the order elements that are not highlighted
+        tiles.forEach(tile => {
+            if (tile.dataset.hover !== 'active') {
+                let orderElem = document.querySelector('[data-index="' + tile.dataset.index + '"]+.order')
+                orderElem.style.display = 'none';
+            }
+        })
+        // Reenable the display of order when highlighting is removed
+        if(color === 'black'){
+            tiles.forEach(tile => {
+                let orderElem = document.querySelector('[data-index="' + tile.dataset.index + '"]+.order')
+                orderElem.style.display = 'block';
+            })
+        }
     }
 
     //////////////////////////////////////

@@ -97,6 +97,11 @@ body {
     margin: auto;
     border: 3px white solid;
     padding-left: 15px;
+    overflow-x: hidden;
+}
+
+#word-list::-webkit-scrollbar {
+    width: 0px;
 }
 
 #solve-button {
@@ -120,8 +125,9 @@ body {
 
 .order {
     position: relative;
-    bottom: 20px;
-    left: 25px;
-    font-size: 15px;
+    text-align: right;
+    bottom: 17px;
+    right: 5px;
+    font-size: 12px;
     z-index: 2;
 }
