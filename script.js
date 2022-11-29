@@ -5,6 +5,11 @@ const requiredNumberOfTiles = 16
 // Define solve button elem and add event listeners
 let solveButtonElem = document.querySelector('#solve-button')
 solveButtonElem.addEventListener('click', solver)
+window.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && solveButtonElem.style.display != 'none') {
+        solver()
+    }
+})
 
 // Define input elems and add event listeners
 let letterInputElem = document.querySelector('#enter-board')
@@ -69,7 +74,7 @@ function createGameboard(rows) {
             tileContainerElem.appendChild(tileElem)
             tileElem.className = 'tile'
             tileElem.id = 'index' + i + j // Coordinate of tile for hover styling
-         tileElem.dataset.index = `${i}${j}`
+            tileElem.dataset.index = `${i}${j}`
             if (rows[i][j] == '') { // Not currently in use
                 tileElem.textContent = 'X'
                 tileElem.style.color = 'black'
@@ -81,6 +86,9 @@ function createGameboard(rows) {
             let orderElem = document.createElement('div')
             orderElem.className = 'order'
             tileContainerElem.appendChild(orderElem)
+            let frequencyElem = document.createElement('div')
+            frequencyElem.className = 'frequency'
+            tileContainerElem.appendChild(frequencyElem)
             rowElem.appendChild(tileContainerElem)
         }
     }
@@ -278,7 +286,7 @@ async function solver() {
             getNextTile(l, m)
         }
     }
-    
+
 
     // Create solution objects from arrays
     function createSolutionsObjectsArray() {
@@ -331,10 +339,23 @@ async function solver() {
         let orderElem = document.querySelector('[data-index="' + tileIndex + '"]+.order')
         orderElem.innerHTML = tileCount
         tile.dataset.first = tileCount
+
+        let tileFreq = letterCount[tileIndex]
+        if (!tileFreq) {
+            tileFreq = 0
+        }
+        let frequencyElem = document.querySelector('[data-index="' + tileIndex + '"]+.order+.frequency')
+        frequencyElem.innerHTML = tileFreq
+        tile.dataset.frequency = tileFreq
     })
 
     // Function to randomly assign colors to solutions for onhover highlighting
     function colorWord(e, color) {
+        // Hide all frequency elems
+        frequencyElems = document.querySelectorAll('.frequency')
+        frequencyElems.forEach(elem => {
+            elem.style.display = 'none'
+        })
         function generateRandomInteger(max) {
             return Math.floor(Math.random() * max) + 1;
         }
@@ -367,13 +388,20 @@ async function solver() {
             if (tile.dataset.hover !== 'active') {
                 let orderElem = document.querySelector('[data-index="' + tile.dataset.index + '"]+.order')
                 orderElem.style.display = 'none';
+
             }
         })
+
         // Reenable the display of order when highlighting is removed
-        if(color === 'black'){
+        if (color === 'black') {
             tiles.forEach(tile => {
                 let orderElem = document.querySelector('[data-index="' + tile.dataset.index + '"]+.order')
                 orderElem.style.display = 'block';
+            })
+            // Redisplay all frequency elems
+            frequencyElems = document.querySelectorAll('.frequency')
+            frequencyElems.forEach(elem => {
+                elem.style.display = 'block'
             })
         }
     }

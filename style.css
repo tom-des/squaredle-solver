@@ -30,6 +30,7 @@ body {
     font-size: 30px;
     max-width: 302px;
     margin: 0;
+    padding: 0px;
 }
 
 #enter-board:hover {
@@ -79,7 +80,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1;
+  
     position: relative;
     top: 0;
     left: 0;
@@ -125,9 +126,22 @@ body {
 
 .order {
     position: relative;
-    text-align: right;
+    text-align: left;
     bottom: 17px;
+    left: 5px;
+    font-size: 12px;
+    color: white;
+ 
+}
+
+.frequency {
+    position: relative;
+    text-align: right;
+    bottom: 30px;
     right: 5px;
     font-size: 12px;
-    z-index: 2;
+    /* make the font color a very light gray */
+    color: gray
+
+ 
 }
