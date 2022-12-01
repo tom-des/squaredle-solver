@@ -20,6 +20,7 @@ body {
     align-items: center;
     justify-content: center;
 }
+/* style active state of enterboard to background red */
 
 #enter-board {
     text-transform: uppercase;
@@ -31,12 +32,26 @@ body {
     max-width: 302px;
     margin: 0;
     padding: 0px;
+    text-align: center;
 }
 
 #enter-board:hover {
     background-color: white;
     color: black;
     border: 3px solid black;
+}
+.selected {
+    /* outline: 4px solid gray; */
+    background-color: #333!important;
+}
+#enter-board:focus::placeholder {
+    color: transparent;
+    background-color: white;   
+}
+
+#enter-board:focus{
+    background-color: white;  
+    color: black; 
 }
 
 #board-size {
@@ -80,7 +95,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-  
     position: relative;
     top: 0;
     left: 0;
@@ -99,6 +113,7 @@ body {
     border: 3px white solid;
     padding-left: 15px;
     overflow-x: hidden;
+    margin-bottom: 15px;
 }
 
 #word-list::-webkit-scrollbar {
@@ -131,7 +146,6 @@ body {
     left: 5px;
     font-size: 12px;
     color: white;
- 
 }
 
 .frequency {
@@ -140,8 +154,10 @@ body {
     bottom: 30px;
     right: 5px;
     font-size: 12px;
-    /* make the font color a very light gray */
-    color: gray
+    color: gray;
+}
+.tile:hover{
+    cursor: pointer;
+    background-color: #333!important;
 
- 
 }

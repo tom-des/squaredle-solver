@@ -75,7 +75,7 @@ function createGameboard(rows) {
             tileElem.className = 'tile'
             tileElem.id = 'index' + i + j // Coordinate of tile for hover styling
             tileElem.dataset.index = `${i}${j}`
-            if (rows[i][j] == '') { // Not currently in use
+            if (rows[i][j] === '') { // Not currently in use
                 tileElem.textContent = 'X'
                 tileElem.style.color = 'black'
             } else {
@@ -248,8 +248,8 @@ async function solver() {
             currentWord.push(nextLetter)
             currentLettersArray.push(`${newRow}${newCol}`)
             newDict = dictionary.filter(word => currentWord.join('') === word.substring(0, currentWord.length))
-            //console.log(newDict)
             //console.log(currentWord)
+            //console.log(newDict)
             joinedCurrentWord = currentWord.join('')
 
             // Find out if the last check was a new solution and log it out.
@@ -287,7 +287,6 @@ async function solver() {
         }
     }
 
-
     // Create solution objects from arrays
     function createSolutionsObjectsArray() {
         let array = []
@@ -319,18 +318,40 @@ async function solver() {
         firstLetterCount[firstLetter] = (firstLetterCount[firstLetter] || 0) + 1
     })
 
-    // Generate overall letter frequency array (not currently in use)
+    // Generate overall letter frequency array
     // Combine all letters into one array
     letters = letters.reduce((a, b) => a.concat(b), [])
+
     // Count how many times each value appears in letters array
     let letterCount = {}
     letters.forEach(letter => {
         letterCount[letter] = (letterCount[letter] || 0) + 1
     })
 
+    // Function to filter word list based on first letter of word
+    let lastStartLetter = ''
+    function filterByStartLetter(e, startLetter) {
+        let elem = e.target
+        let thisStartLetter = elem.id
+        if (lastStartLetter === thisStartLetter) {
+            elem.classList.remove('selected')
+            regenerateWordList(solutionObjects)
+            lastStartLetter = ''
+            return
+        }
+        if (lastStartLetter) {
+            document.getElementById(lastStartLetter).classList.remove('selected')
+        }
+        elem.classList.add('selected')
+        let filteredSolutions = solutionObjects.filter(solution => solution.letters.split(',')[0] === startLetter)
+        regenerateWordList(filteredSolutions)
+        lastStartLetter = thisStartLetter
+    }
+
     // Set value for first letter frequencies to tiles
     let tiles = document.querySelectorAll('.tile')
     tiles.forEach(tile => {
+        tile.addEventListener('click', (e) => filterByStartLetter(e, tile.dataset.index))
         let tileIndex = tile.dataset.index
         let tileCount = firstLetterCount[tileIndex]
         if (!tileCount) {
@@ -349,9 +370,34 @@ async function solver() {
         tile.dataset.frequency = tileFreq
     })
 
+    // Function to regenerate word list
+    function regenerateWordList(filterListObject) {
+
+        // If a word list elem already exists, remove it
+        if (document.getElementById('word-list')) {
+            document.getElementById('word-list').remove()
+        }
+        let wordListContainerElem = document.createElement('div')
+        wordListContainerElem.id = 'word-list'
+        gameboardElem.appendChild(wordListContainerElem)
+
+        // Create the word list and append it to the word list container
+        let wordListElem = document.createElement('ol')
+        wordListContainerElem.appendChild(wordListElem)
+        filterListObject.forEach((item) => {
+            let listItem = document.createElement('li')
+            listItem.dataset.tiles = item.letters
+            listItem.textContent = item.word
+            listItem.addEventListener('mouseover', (e) => colorWord(e))
+            listItem.addEventListener('mouseout', (e) => colorWord(e, 'black'))
+            wordListElem.appendChild(listItem)
+
+        })
+        wordListContainerElem.appendChild(wordListElem)
+    }
+
     // Function to randomly assign colors to solutions for onhover highlighting
     function colorWord(e, color) {
-        // Hide all frequency elems
         frequencyElems = document.querySelectorAll('.frequency')
         frequencyElems.forEach(elem => {
             elem.style.display = 'none'
@@ -371,9 +417,14 @@ async function solver() {
         tileNums.forEach((tile, index) => {
             let tileElem = document.querySelector('#index' + tile)
             tileElem.dataset.hover = 'active'
-            tileElem.style.backgroundColor = color
+            if (color !== 'black') {
+                tileElem.style.setProperty('background-color', color, 'important')
+            } else {
+                tileElem.style.backgroundColor = ''
+            }
             tileElem.dataset.order = index + 1
             let orderElem = document.querySelector('#index' + tile + '+.order')
+
             // Reset tiles to original state when highlighting is removed
             if (color === 'black') {
                 tileElem.dataset.hover = ''
@@ -383,6 +434,7 @@ async function solver() {
             }
             orderElem.innerHTML = tileElem.dataset.order
         })
+
         // Hide the order elements that are not highlighted
         tiles.forEach(tile => {
             if (tile.dataset.hover !== 'active') {
